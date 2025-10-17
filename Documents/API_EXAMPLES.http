@@ -1,0 +1,29 @@
+### Create Form
+POST http://localhost:5000/api/forms
+Content-Type: application/json
+
+{
+  "name": "Ballot Design Form",
+  "schemaJSON": {
+    "questions": [
+      { "id": "q1", "label": "Contest Name", "type": "text" },
+      { "id": "q2", "label": "Candidates", "type": "text" }
+    ]
+  }
+}
+
+### Submit Form (Customer)
+POST http://localhost:5000/api/submissions
+Content-Type: application/json
+
+{
+  "formId": 1,
+  "customerId": 1,
+  "dataJSON": {
+    "Contest Name": "Mayor",
+    "Candidates": "Alice, Bob"
+  }
+}
+
+### Approve Form
+PUT http://localhost:5000/api/submissions/1/approve

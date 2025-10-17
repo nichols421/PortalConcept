@@ -1,0 +1,212 @@
+### Election Portal API Test Requests
+### Use with REST Client extension in VS Code or similar tools
+
+@baseUrl = http://localhost:5000/api
+
+### ========================================
+### CUSTOMERS
+### ========================================
+
+### Get all customers
+GET {{baseUrl}}/customers
+
+### Get customer by ID
+GET {{baseUrl}}/customers/1
+
+### Create a new customer
+POST {{baseUrl}}/customers
+Content-Type: application/json
+
+{
+  "name": "Boulder County"
+}
+
+### ========================================
+### FORMS
+### ========================================
+
+### Get all forms
+GET {{baseUrl}}/forms
+
+### Create a form
+POST {{baseUrl}}/forms
+Content-Type: application/json
+
+{
+  "name": "Ballot Design Form",
+  "schemaJSON": {
+    "questions": [
+      { "id": "q1", "label": "Contest Name", "type": "text" },
+      { "id": "q2", "label": "Number of Candidates", "type": "number" },
+      { "id": "q3", "label": "Candidates", "type": "text" }
+    ]
+  }
+}
+
+### Get form by ID
+GET {{baseUrl}}/forms/1
+
+### Update a form
+PUT {{baseUrl}}/forms/1
+Content-Type: application/json
+
+{
+  "name": "Ballot Design Form - Updated",
+  "schemaJSON": {
+    "questions": [
+      { "id": "q1", "label": "Contest Name", "type": "text" },
+      { "id": "q2", "label": "Number of Candidates", "type": "number" },
+      { "id": "q3", "label": "Candidates (comma-separated)", "type": "text" },
+      { "id": "q4", "label": "Election Type", "type": "dropdown", "options": ["Primary", "General", "Special"] }
+    ]
+  }
+}
+
+### ========================================
+### ELECTIONS
+### ========================================
+
+### Get all elections
+GET {{baseUrl}}/elections
+
+### Get election by ID (includes customers, forms, webhooks)
+GET {{baseUrl}}/elections/1
+
+### Create a new election
+POST {{baseUrl}}/elections
+Content-Type: application/json
+
+{
+  "name": "Fall 2026 Primary",
+  "type": "Primary",
+  "state": "Colorado"
+}
+
+### Assign customers to election
+POST {{baseUrl}}/elections/1/assign-customers
+Content-Type: application/json
+
+{
+  "customerIds": [1, 2]
+}
+
+### Attach forms to election
+POST {{baseUrl}}/elections/1/attach-forms
+Content-Type: application/json
+
+{
+  "formIds": [1]
+}
+
+### ========================================
+### WEBHOOKS
+### ========================================
+
+### Get all webhooks
+GET {{baseUrl}}/webhooks
+
+### Create webhook for submission event
+POST {{baseUrl}}/webhooks
+Content-Type: application/json
+
+{
+  "electionId": 1,
+  "eventType": 0,
+  "url": "http://localhost:5000/api/webhooks/test",
+  "examplePayloadJSON": "{\"event\":\"form_submitted\"}"
+}
+
+### Create webhook for approval event
+POST {{baseUrl}}/webhooks
+Content-Type: application/json
+
+{
+  "electionId": 1,
+  "eventType": 1,
+  "url": "http://localhost:5000/api/webhooks/test",
+  "examplePayloadJSON": "{\"event\":\"form_approved\"}"
+}
+
+### ========================================
+### SUBMISSIONS
+### ========================================
+
+### Get all submissions
+GET {{baseUrl}}/submissions
+
+### Submit a form (customer fills out form) - triggers webhook
+POST {{baseUrl}}/submissions
+Content-Type: application/json
+
+{
+  "formId": 1,
+  "customerId": 1,
+  "dataJSON": {
+    "q1": "Mayor",
+    "q2": 3,
+    "q3": "Alice Johnson, Bob Smith, Carol Williams"
+  }
+}
+
+### Get submission by ID
+GET {{baseUrl}}/submissions/1
+
+### Approve a submission - triggers webhook
+PUT {{baseUrl}}/submissions/1/approve
+
+### ========================================
+### COMPLETE WORKFLOW EXAMPLE
+### ========================================
+
+### 1. First, create a form
+POST {{baseUrl}}/forms
+Content-Type: application/json
+
+{
+  "name": "Voter Registration Form",
+  "schemaJSON": {
+    "questions": [
+      { "id": "q1", "label": "Full Name", "type": "text" },
+      { "id": "q2", "label": "Age", "type": "number" },
+      { "id": "q3", "label": "Party Affiliation", "type": "dropdown", "options": ["Democrat", "Republican", "Independent", "Other"] }
+    ]
+  }
+}
+
+### 2. Attach the form to election 1
+POST {{baseUrl}}/elections/1/attach-forms
+Content-Type: application/json
+
+{
+  "formIds": [1, 2]
+}
+
+### 3. Configure webhooks for the election
+POST {{baseUrl}}/webhooks
+Content-Type: application/json
+
+{
+  "electionId": 1,
+  "eventType": 0,
+  "url": "http://localhost:5000/api/webhooks/test"
+}
+
+### 4. Customer submits the form
+POST {{baseUrl}}/submissions
+Content-Type: application/json
+
+{
+  "formId": 2,
+  "customerId": 1,
+  "dataJSON": {
+    "q1": "John Doe",
+    "q2": 35,
+    "q3": "Independent"
+  }
+}
+
+### 5. Admin approves the submission
+PUT {{baseUrl}}/submissions/2/approve
+
+### 6. Check webhook test endpoint logs (check console output)
+
